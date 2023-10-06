@@ -211,7 +211,7 @@ For example, Lua, Ruby, etc."
   "Turn `ts-fold-mode' on and off alongside `treesit'
 when in a mode ts-fold can act on."
   (condition-case nil
-      (if (and (treesit-buffer-root-node)
+      (if (and (treesit-buffer-root-node (treesit-language-at 0))
                (ts-fold-usable-mode-p))
           (ts-fold-mode 1)
         (ts-fold-mode -1))
@@ -294,7 +294,7 @@ Return nil if no valid node is found.
 This function is borrowed from `tree-sitter-node-at-point'."
   (let* ((pos (or pos (point)))
          (mode-ranges (alist-get major-mode ts-fold-range-alist))
-         (root (treesit-buffer-root-node))
+         (root (treesit-buffer-root-node (treesit-language-at pos)))
          (node (treesit-node-descendant-for-range root pos pos))
          ;; Used for looping
          (current node))
@@ -343,7 +343,7 @@ Return nil otherwise."
   "Run BODY only if `tree-sitter-mode` is enabled."
   (declare (indent 0)
            (debug (&rest form)))
-  `(if (and (functionp 'treesit-buffer-root-node) (treesit-buffer-root-node))
+  `(if (and (functionp 'treesit-buffer-root-node) (treesit-buffer-root-node (treesit-language-at 0)))
        (progn ,@body)
      (message "ts-fold: ignoring, because cannot parse current buffer with treesit")))
 
@@ -393,7 +393,7 @@ If the current node is not folded or not foldable, do nothing."
   (interactive)
   (ts-fold--ensure-ts
     (let* ((ts-fold-indicators-mode)
-           (node (treesit-buffer-root-node))
+           (node (treesit-buffer-root-node (treesit-language-at 0)))
            (patterns (mapconcat (lambda (fold-range) (concat "(" (symbol-name (car fold-range)) ") " "@name"))
                                  (alist-get major-mode ts-fold-range-alist) " "))
            (query (treesit-query-compile (treesit-node-language node) patterns))
