@@ -23,29 +23,30 @@ to provide code folding based on the tree-sitter syntax tree.
 
 **Table of Contents**
 
-- [ts-fold](#ts-fold)
-  - [💾 Installation](#-installation)
-    - [🔍 Method 1. with `straight.el` and `use-package`:](#-method-1-with-straightel-and-use-package)
-    - [🔍 Method 2. Manual](#-method-2-manual)
-  - [🖥 Usage](#-usage)
-    - [📇 Commands](#-commands)
-    - [🔨 Supported languages](#-supported-languages)
-  - [📝 Customization](#-customization)
-    - [⚪ Folding on new nodes](#-folding-on-new-nodes)
-      - [❔ Example](#-example)
-      - [↔ Offset](#-offset)
-    - [🔍 Writing new fold functions](#-writing-new-fold-functions)
-  - [🔌 Plugins](#-plugins)
-    - [⚖️ Indicators Mode](#-indicators-mode)
-      - [💾 Installation](#-installation-1)
-      - [🖥 Usage](#-usage-1)
-    - [📝 Summary](#-summary)
-      - [🖥 Usage](#-usage-2)
-      - [📝 Customization](#-customization-1)
-  - [🔰 Contribute](#-contribute)
-    - [❓ How to add a folding parser?](#-how-to-add-a-folding-parser)
-    - [🔍 Where can I look for tree-sitter node?](#-where-can-i-look-for-tree-sitter-node)
-    - [❓ How to create a summary parser?](#-how-to-create-a-summary-parser)
+- [💾 Installation](#-installation)
+  - [🔍 Method 1. with `straight.el` and `use-package`:](#-method-1-with-straightel-and-use-package)
+  - [🔍 Method 2. Manual](#-method-2-manual)
+- [🖥 Usage](#-usage)
+  - [📇 Commands](#-commands)
+  - [🔨 Supported languages](#-supported-languages)
+- [📝 Customization](#-customization)
+  - [⚪ Folding on new nodes](#-folding-on-new-nodes)
+    - [❔ Example](#-example)
+    - [↔ Offset](#-offset)
+  - [🔍 Writing new fold functions](#-writing-new-fold-functions)
+- [🔌 Plugins](#-plugins)
+  - [⚖️ Indicators Mode](#-indicators-mode)
+    - [💾 Installation](#-installation-1)
+    - [🖥 Usage](#-usage-1)
+  - [📝 Summary](#-summary)
+    - [🖥 Usage](#-usage-2)
+    - [📝 Customization](#-customization-1)
+  - [🌫️ Line-Comment folding](#-line-comment-folding)
+    - [🖥 Usage](#-usage-3)
+- [🔰 Contribute](#-contribute)
+  - [❓ How to add a folding parser?](#-how-to-add-a-folding-parser)
+  - [🔍 Where can I look for tree-sitter node?](#-where-can-i-look-for-tree-sitter-node)
+  - [❓ How to create a summary parser?](#-how-to-create-a-summary-parser)
 
 <!-- markdown-toc end -->
 
@@ -68,7 +69,7 @@ then in Emacs:
 
 ```elisp
 (add-to-list 'load-path "/path/to/lib")
-(require ts-fold)
+(require 'ts-fold)
 ```
 
 or
@@ -87,11 +88,12 @@ The following are the functions provided by `ts-fold-mode`
 Commands for enabling `ts-fold`:
 
 | Commands                         | Description                                                                                         |
-| -------------------------------- | --------------------------------------------------------------------------------------------------- |
+|----------------------------------|-----------------------------------------------------------------------------------------------------|
 | `ts-fold-mode`                   | enable `ts-fold-mode` in the current buffer.                                                        |
 | `global-ts-fold-mode`            | enable `ts-fold-mode` whenever tree-sitter is turned on and the major mode is supported by ts-fold. |
 | `ts-fold-indicators-mode`        | enable ts-fold with indicators in the current buffer. See [plugins section](#-indicators-mode).     |
 | `global-ts-fold-indicators-mode` | enable ts-fold with indicators globally. See [plugins section](#-indicators-mode).                  |
+| `ts-fold-line-comment-mode`      | enable line comment folding.                                                                        |
 
 Commands for using `ts-fold`.
 
@@ -112,25 +114,36 @@ If evil mode is loaded, then these commands are also added to the evil folding l
 
 These languages are fairly complete:
 
-- Bash
-- C / C++ / C# / CSS
-- Elixir
-- Go
-- HTML
-- Java / JavaScript / JSX / JSON / Julia
-- Nix
-- PHP / Python
-- R / Ruby / Rust
-- Scala / Swift
-- TypeScript / TSX
+- Assembly
+- Bash / Beancount
+- C / C++ / C# / Clojure / CMake / CSS
+- Dart
+- Elisp / Elixir / Erlang
+- GDScript / Go
+- Haskell / HTML
+- Jai / Java / JavaScript / JSX / JSON / Jsonnet / Julia
+- Kotlin
+- LaTex / Lua
+- Make / Markdown
+- Nix / Noir
+- OCaml
+- Perl / PHP / Python
+- R / Ruby / Rust / reStructuredText
+- Scala / Scheme / SQL / Swift
+- TOML / TypeScript / TSX
+- Verilog / VHDL
+- XML
+- YAML
+- Zig
 
 These languages are in development:
 
+- Ada
 - Agda
 - Elm
-- Emacs Lisp
-- OCaml
-- XML (upstream)
+- Fortran
+- Pascal
+- Smithy
 
 ## 📝 Customization
 
@@ -143,21 +156,21 @@ that others may benefit from better folding in the future!
 
 ### ⚪ Folding on new nodes
 
-Ts-fold defines all its folding definitions in the the variable
+Ts-fold defines all its folding definitions in the variable
 `ts-fold-range-alist` which is an alist with the key of the alist being the
 mode and the value being another alist of fold definitions.
 
 ```elisp
 ;; Example of ts-fold-range-alist's structure
-'((c-mode . c-folding-definitions) ;; <language>-folding-definitions is structured as shown below
-  (css-mode . css-folding-definitions)
-  (go-mode . go-folding-definitions)
+'((c-mode     . c-folding-definitions) ;; <language>-folding-definitions is structured as shown below
+  (css-mode   . css-folding-definitions)
+  (go-mode    . go-folding-definitions)
   (scala-mode . scala-folding-definitions)
   ...)
 
 ;; Examle of a folding definition alist
 (setq css-folding-definitions
-    (block . ts-fold-range-seq)
+    (block   . ts-fold-range-seq)
     (comment . ts-fold-range-c-like-comment))
 ```
 
@@ -187,6 +200,30 @@ For the folding functions, ts-fold provides some default
   int main() {...} // Folded node
   ```
 
+- `ts-fold-range-markers` - Folds the node starting from a giving delimiter
+  character. Useful if tree-sitter's node definition doesn't align with the
+  start of the desired folding section.
+
+  **NOTE:** This folding function requires a lambda (or an externally
+  defined function wrapper) so that the delimiter can be specified. You
+  usually don't need to worry about the `node` and `offset` variables, so just
+  pass them through.
+
+```go
+type Dog interface {
+    Bark() (string, error)
+    Beg() (bool, error)
+}
+
+/* | Note: The tree-sitter node starts at the word interface, not at the '{'.
+ * | '(interface_type . (lambda (node offset)
+ * |                      (ts-fold-range-markers node offset "{" "}")))
+ * V
+ */
+
+type Dog interface {...}
+```
+
 - `ts-fold-range-block-comment` - Folds multi-line comments that are of the form
   `/*...*/`. Should show a summary if the commentary plugin is turned on.
 
@@ -212,8 +249,10 @@ For the folding functions, ts-fold provides some default
 
 - `ts-fold-range-line-comment` - For languages that have one line comment blocks
   with the comment delimiter starting each line. Condenses all the comment nodes
-  into a single fold. This folding function requires a lambda (or an externally
-  defined function wrapper) so that the comment delimiter can be specified. You
+  into a single fold.
+
+  **Note:** This folding function requires a lambda (or an externally
+  defined function wrapper) so that the delimiter can be specified. You
   usually don't need to worry about the `node` and `offset` variables, so just
   pass them through.
 
@@ -262,7 +301,7 @@ go ahead and add new fold definitions to `ts-fold-range-alist` and be good to go
 
 #### ❔ Example
 
-Let's look at a quick example of adding a new folding definition. Lets say you
+Let's look at a quick example of adding a new folding definition. Let's say you
 want to add folding to `go-mode`'s `field_declaration_list`. The folding
 definition that is needed will be
 `'(field_declaration_list . ts-fold-range-seq)`. To add this to the
@@ -412,7 +451,7 @@ turn off `ts-fold-mode`
   Else, a hook can be added to tree-sitter directly.
 
   ```elisp
-  (add-hook 'tree-sitter-after-on-hook #'ts-fold-indictors-mode)
+  (add-hook 'tree-sitter-after-on-hook #'ts-fold-indicators-mode)
   ```
 
 - To switch to left/right fringe: (Default is `left-fringe`)
@@ -433,13 +472,15 @@ turn off `ts-fold-mode`
   with this plugin.
 
   ```elisp
+
   (setq ts-fold-indicators-face-function
-     (lambda (pos &rest _)
-       (let ((ln (line-number-at-pos pos)))
-         (cond
-          ((memq ln line-reminder--change-lines) 'line-reminder-modified-sign-face)
-          ((memq ln line-reminder--saved-lines) 'line-reminder-saved-sign-face)
-          (t nil)))))
+        (lambda (pos &rest _)
+          ;; Return the face of it's function.
+          (line-reminder--get-face (line-number-at-pos pos t))))
+
+  (advice-add 'line-reminder-transfer-to-saved-lines :after
+              ;; Refresh indicators for package `ts-fold'.
+              #'ts-fold-indicators-refresh)
   ```
 
 ### 📝 Summary
@@ -497,6 +538,20 @@ However, there are lots of examples and helper functions present in
 As can be seen `ts-fold-summary--generic` is a very helpful function since it
 removes the provided delimiter and returns the first line. often this will be
 enough.
+
+### 🌫 Line-Comment folding
+
+<p align="center">
+<img src="./etc/line-comment.gif" width="80%" height="80%"/>
+</p>
+
+This plugin makes line comment into foldable range.
+
+#### 🖥 Usage
+
+  ```
+  M-x ts-fold-line-comment-mode
+  ```
 
 ## 🔰 Contribute
 

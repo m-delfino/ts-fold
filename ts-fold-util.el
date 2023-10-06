@@ -1,6 +1,6 @@
 ;;; ts-fold-util.el --- Utility module  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021-2022  Shen, Jen-Chieh
+;; Copyright (C) 2021-2023  Shen, Jen-Chieh
 ;; Created date 2021-10-04 20:19:42
 
 ;; This file is NOT part of GNU Emacs.
@@ -24,6 +24,20 @@
 ;;
 
 ;;; Code:
+
+;;
+;; (@* "String" )
+;;
+
+(defun ts-fold-2str (obj)
+  "Convert OBJ to string."
+  (format "%s" obj))
+
+(defun ts-fold--count-matches (pattern str)
+  "Count occurrences of PATTERN in STR.
+
+Like function `s-count-matches' but faster."
+  (max 0 (1- (length (split-string str pattern)))))
 
 ;;
 ;; (@* "Cons" )
@@ -75,7 +89,8 @@
     font-lock-comment-delimiter-face
     tree-sitter-hl-face:comment
     tree-sitter-hl-face:doc
-    hl-todo)
+    hl-todo
+    rst-comment)
   "List of face that apply for document string.")
 
 (defun ts-fold--get-face (obj trim)
@@ -98,12 +113,91 @@ Optional argument TRIM, see function `ts-fold--get-face'."
   (ts-fold--is-face obj ts-fold--doc-faces trim))
 
 ;;
+;; (@* "Positions" )
+;;
+
+(defun ts-fold--last-eol (pos)
+  "Go to POS then find previous line break, and return its position."
+  (save-excursion
+    (goto-char pos)
+    (max 1 (1- (line-beginning-position)))))
+
+(defun ts-fold--bol (point)
+  "Return line beginning position at POINT."
+  (save-excursion (goto-char point) (line-beginning-position)))
+
+(defun ts-fold--eol (point)
+  "Return line end position at POINT."
+  (save-excursion (goto-char point) (line-end-position)))
+
+;;
 ;; (@* "Math" )
 ;;
 
 (defun ts-fold--in-range-p (in-val in-min in-max)
   "Check to see if IN-VAL is between IN-MIN and IN-MAX."
   (and (<= in-min in-val) (<= in-val in-max)))
+
+;;
+;; (@* "List" )
+;;
+
+(defun ts-fold-listify (obj)
+  "Ensure OBJ is a list."
+  (if (listp obj) obj (list obj)))
+
+;;
+;; (@* "TS node" )
+;;
+
+(defun ts-fold--compare-type (node type)
+  "Compare NODE's type to TYPE."
+  ;; tsc-node-type returns a symbol or a string and `string=' automatically
+  ;; converts symbols to strings
+  (string= (tsc-node-type node) type))
+
+(defun ts-fold-get-children (node)
+  "Get list of direct children of NODE."
+  (let (children)
+    (dotimes (index (tsc-count-children node))
+      (push (tsc-get-nth-child node index) children))
+    (reverse children)))
+
+(defun ts-fold-get-children-traverse (node)
+  "Return children from NODE but traverse it."
+  (let (nodes)
+    (tsc-traverse-mapc (lambda (child) (push child nodes)) node)
+    (reverse nodes)))
+
+(defun ts-fold-find-children (node type)
+  "Search through the children of NODE to find all with type equal to TYPE;
+then return that list."
+  (cl-remove-if-not (lambda (child) (ts-fold--compare-type child type))
+                    (ts-fold-get-children node)))
+
+(defun ts-fold-find-children-traverse (node type)
+  "Like function `ts-fold-find-children' but traverse it.
+
+For arguments NODE and TYPE, see function `ts-fold-find-children' for more
+information."
+  (cl-remove-if-not (lambda (child) (ts-fold--compare-type child type))
+                    (ts-fold-get-children-traverse node)))
+
+(defun ts-fold-find-parent (node type)
+  "Find the TYPE of parent from NODE."
+  (let ((parent (tsc-get-parent node))
+        (break))
+    (while (and parent (not break))
+      (setq break (ts-fold--compare-type parent type))
+      (unless break
+        (setq parent (tsc-get-parent parent))))
+    parent))
+
+(defun ts-fold-last-child (node)
+  "Return last child node from parent NODE."
+  (when-let* ((count (tsc-count-children node))
+              ((not (= count 0))))
+    (tsc-get-nth-child node (1- count))))
 
 (provide 'ts-fold-util)
 ;;; ts-fold-util.el ends here
