@@ -263,6 +263,7 @@ type of content by checking the word boundary's existence."
     (php-mode               . ts-fold-summary-javadoc)
     (pascal-mode            . ts-fold-summary-pascal-doc)
     (python-mode            . ts-fold-summary-python-doc)
+    (python-ts-mode         . ts-fold-summary-python-doc)
     (rjsx-mode              . ts-fold-summary-javadoc)
     (rst-mode               . ts-fold-summary-rst-doc)
     (ruby-mode              . ts-fold-summary-ruby-doc)
