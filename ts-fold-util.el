@@ -70,6 +70,18 @@ Like function `s-count-matches' but faster."
 (defun ts-fold--get-nth-named-child (node index)
   (nth index (treesit-node-children node t)))
 
+(defun tsc-traverse-mapc (fn node)
+  (mapcar fn (treesit-node-children node t)))
+
+(defun tsc-node-type (node)
+  (treesit-node-type node))
+
+(defun tsc-node-start-position (node)
+  (treesit-node-start node))
+
+(defun tsc-node-end-position (node)
+  (treesit-node-end node))
+
 ;;
 ;; (@* "Folds" )
 ;;
